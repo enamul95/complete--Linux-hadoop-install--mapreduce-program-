@@ -1,0 +1,329 @@
+Step 1: Installing Java 8
+Step 2: Open Terminal write on java -version
+Step 3: output like
+java version "1.8.0_101"
+Java(TM) SE Runtime Environment (build 1.8.0_101-b13)
+Java HotSpot(TM) 64-Bit Server VM (build 25.101-b13, mixed mode)
+
+Step 4: Creating Hadoop User 
+# adduser hadoop
+# passwd hadoop
+
+Step 5: 
+After creating account, it also required to set up key based ssh to its own account. To do this use execute following commands.
+
+# su - hadoop
+$ ssh-keygen -t rsa
+$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+$ chmod 0600 ~/.ssh/authorized_keys
+
+Step 6:
+Lets verify key based login. Below command should not ask for password but first time it will prompt for adding RSA to the list of known hosts.
+
+$ ssh localhost
+$ exit
+
+Step 7. Downloading Hadoop latest version
+Now download hadoop  source archive file using below command. You can also select alternate download mirror for increasing download speed.
+
+https://www.apache.org/dyn/closer.cgi/hadoop/common/
+or
+$ cd ~
+$ wget http://apache.claz.org/hadoop/common/hadoop-2.6.0/hadoop-2.6.0.tar.gz
+$ tar xzf hadoop-2.6.0.tar.gz
+$ mv hadoop-2.6.0 hadoop
+
+Step 8. Configure Hadoop Pseudo-Distributed Mode 
+
+8.1. Setup Environment Variables 
+First we need to set environment variable uses by hadoop. Edit ~/.bashrc file and append following values at end of file.
+
+export HADOOP_HOME=/home/hadoop/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+
+8.2 Now apply the changes in current running environment. run bellow command..
+$ source ~/.bashrc
+
+8.3 set Java Path to hadoop-env.sh like bellow
+Now edit $HADOOP_HOME/etc/hadoop/hadoop-env.sh file and set JAVA_HOME environment variable. Change the JAVA path as per install on your system.
+
+export JAVA_HOME=/opt/jdk1.8.0_66/
+
+8.4. Edit Configuration Files 
+Hadoop has many of configuration files, which need to configure as per requirements of your hadoop infrastructure. Lets start with the configuration with basic hadoop single node cluster setup. first navigate to below location
+
+$ cd $HADOOP_HOME/etc/hadoop
+or go to hadoop location etc/hadoop
+
+8.5 Edit core-site.xml paste it
+<configuration>
+<property>
+  <name>fs.default.name</name>
+    <value>hdfs://localhost:9000</value>
+</property>
+</configuration>
+
+8.6 Edit hdfs-site.xml & paste it
+
+<configuration>
+<property>
+ <name>dfs.replication</name>
+ <value>1</value>
+</property>
+
+<property>
+  <name>dfs.name.dir</name>
+    <value>file:///home/hadoop/hadoopdata/hdfs/namenode</value>
+</property>
+
+<property>
+  <name>dfs.data.dir</name>
+    <value>file:///home/hadoop/hadoopdata/hdfs/datanode</value>
+</property>
+</configuration>
+
+8.7 Edit mapred-site.xml & paste bewllow the code
+<configuration>
+ <property>
+  <name>mapreduce.framework.name</name>
+   <value>yarn</value>
+ </property>
+</configuration>
+ 
+8.8 Edit yarn-site.xml paste bellow code
+
+<configuration>
+ <property>
+  <name>yarn.nodemanager.aux-services</name>
+    <value>mapreduce_shuffle</value>
+ </property>
+</configuration>
+
+Step 9 : Format Namenode
+
+Now format the namenode using following command, make sure that Storage directory & run the bewllow command
+
+$ hdfs namenode -format
+
+output like...
+15/02/04 09:58:43 INFO namenode.NameNode: STARTUP_MSG:
+/************************************************************
+STARTUP_MSG: Starting NameNode
+STARTUP_MSG:   host = svr1.tecadmin.net/192.168.1.133
+STARTUP_MSG:   args = [-format]
+STARTUP_MSG:   version = 2.6.0
+...
+...
+15/02/04 09:58:57 INFO common.Storage: Storage directory /home/hadoop/hadoopdata/hdfs/namenode has been successfully formatted.
+15/02/04 09:58:57 INFO namenode.NNStorageRetentionManager: Going to retain 1 images with txid >= 0
+15/02/04 09:58:57 INFO util.ExitUtil: Exiting with status 0
+15/02/04 09:58:57 INFO namenode.NameNode: SHUTDOWN_MSG:
+/************************************************************
+SHUTDOWN_MSG: Shutting down NameNode at svr1.tecadmin.net/192.168.1.133
+************************************************************/
+
+
+Step 10. Start Hadoop Cluster 
+
+Lets start your hadoop cluster using the scripts provides by hadoop. Just navigate to your hadoop sbin directory and execute scripts one by one.
+
+$ cd $HADOOP_HOME/sbin/
+
+Step 11: Now run start-dfs.sh script.
+$ start-dfs.sh
+
+Sample output:
+
+15/02/04 10:00:34 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Starting namenodes on [localhost]
+localhost: starting namenode, logging to /home/hadoop/hadoop/logs/hadoop-hadoop-namenode-svr1.tecadmin.net.out
+localhost: starting datanode, logging to /home/hadoop/hadoop/logs/hadoop-hadoop-datanode-svr1.tecadmin.net.out
+Starting secondary namenodes [0.0.0.0]
+The authenticity of host '0.0.0.0 (0.0.0.0)' can't be established.
+RSA key fingerprint is 3c:c4:f6:f1:72:d9:84:f9:71:73:4a:0d:55:2c:f9:43.
+Are you sure you want to continue connecting (yes/no)? yes
+0.0.0.0: Warning: Permanently added '0.0.0.0' (RSA) to the list of known hosts.
+0.0.0.0: starting secondarynamenode, logging to /home/hadoop/hadoop/logs/hadoop-hadoop-secondarynamenode-svr1.tecadmin.net.out
+15/02/04 10:01:15 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+
+Step 12: Now run start-yarn.sh script.
+$ start-yarn.sh
+
+Sample output:
+
+starting yarn daemons
+starting resourcemanager, logging to /home/hadoop/hadoop/logs/yarn-hadoop-resourcemanager-svr1.tecadmin.net.out
+localhost: starting nodemanager, logging to /home/hadoop/hadoop/logs/yarn-hadoop-nodemanager-svr1.tecadmin.net.out
+
+
+Step 13. Test Hadoop Single Node Setup 
+Make the HDFS directories required using following commands.
+$ bin/hdfs dfs -mkdir /user
+$ bin/hdfs dfs -mkdir /user/hadoop
+
+Step 14 – Now copy all files from local file system /var/log/httpd to hadoop distributed file system using below command
+bin/hdfs dfs -put /var/log/httpd logs
+
+
+Step 15: open the browser & paste on url
+http://127.0.0.1:50070
+
+
+Run mapreduce
+
+Step 1: download two jar 
+1. hadoop-common-2.6.0.jar
+2. hadoop-mapreduce-client-core-0.23.1.jar
+
+Step 2: create a project name WordCount with netbean ide or eclipse ide
+Step 3: add hadoop-common-2.6.0.jar, hadoop-mapreduce-client-core-0.23.1.jar to the project
+
+Step 4: create a project main class named WordCount & paste bellow code
+
+import java.io.IOException;
+import java.util.*;
+        
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+        
+public class WordCount {
+        
+ public static class Map extends Mapper<LongWritable, Text, Text, IntWritable> {
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+        
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        String line = value.toString();
+        StringTokenizer tokenizer = new StringTokenizer(line);
+        while (tokenizer.hasMoreTokens()) {
+            word.set(tokenizer.nextToken());
+            context.write(word, one);
+        }
+    }
+ } 
+        
+ public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+    public void reduce(Text key, Iterable<IntWritable> values, Context context) 
+      throws IOException, InterruptedException {
+        int sum = 0;
+        for (IntWritable val : values) {
+            sum += val.get();
+        }
+        context.write(key, new IntWritable(sum));
+    }
+ }
+        
+ public static void main(String[] args) throws Exception {
+    Configuration conf = new Configuration();
+        
+        Job job = new Job(conf, "wordcount");
+    
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+        
+    job.setMapperClass(Map.class);
+    job.setReducerClass(Reduce.class);
+        
+    job.setInputFormatClass(TextInputFormat.class);
+    job.setOutputFormatClass(TextOutputFormat.class);
+        
+    FileInputFormat.addInputPath(job, new Path(args[1]));
+    FileOutputFormat.setOutputPath(job, new Path(args[2]));
+        
+    job.waitForCompletion(true);
+ }
+        
+}
+
+
+Step 5 : In netbean tools clean and buil for jar file Or eclipse export jar file
+
+Step 6: In terminal run bewllo command
+cat >inputfile.txt
+
+above command give to write then write 
+hi this is enamul.
+how are you?
+I am fine
+how is your job?
+how is your family?
+
+Step 6: after writing simly Ctrl+d for save the file
+Step 7: run bwllow  command & you will see what you have written in command line
+
+cat inputfile.txt
+
+Step 8: run bellow  command  for checking hadoop creating directory
+hadoop fs -ls
+
+It shows like if exist
+Found 8 items
+drwxr-xr-x   - hadoop supergroup          0 2017-04-02 21:51 hadoop
+drwxr-xr-x   - hadoop supergroup          0 2017-04-08 17:34 input
+drwxr-xr-x   - hadoop supergroup          0 2017-04-22 23:40 input1
+drwxr-xr-x   - hadoop supergroup          0 2017-04-23 00:00 output
+drwxr-xr-x   - hadoop supergroup          0 2017-04-23 00:10 output1
+drwxr-xr-x   - hadoop supergroup          0 2017-04-10 01:45 wordcount
+drwxr-xr-x   - hadoop supergroup          0 2017-04-10 01:57 wordcountOutput
+drwxr-xr-x   - hadoop supergroup          0 2017-04-05 12:05 wordcountinput
+
+Step 9: Now we want to copy the input file to hdfs:
+9.1: hadoop fs -mkdir inputtest
+9.2 :  hadoop fs -put /home/hadoop/inputfile.txt  inputtest/
+9.3 : hadoop fs -ls inputtest
+simple output:
+17/04/23 11:07:02 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Found 1 items
+-rw-r--r--   1 hadoop supergroup         78 2017-04-23 11:06 inputtest/inputfile.txt
+
+9.4:Time to run MapReduce job write bellow command
+
+hadoop jar /home/hadoop/dist/WordCount.jar WordCount inputtest/inputfile.txt outputfile
+
+
+shows 
+Job job_local566892169_0001 completed successfully
+
+Now to to : 
+--> http://127.0.0.1:50070
+-->Utilities on the left
+-->Select dropdown Browse the file system
+-->Usr
+-->Hadoop
+-->outputfile
+-->part-r-00000
+--> click and download
+--> find the like
+I	1
+am	1
+are	1
+enamul.	1
+family?	1
+fine	1
+hi	1
+how	3
+is	3
+job?	1
+this	1
+you?	1
+your	2
+
+
+Thanks...
+
+
+
+
